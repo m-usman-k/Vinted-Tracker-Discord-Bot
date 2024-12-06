@@ -1,4 +1,4 @@
-import discord, json
+import discord, json, os
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ui import TextInput, Modal
@@ -18,7 +18,7 @@ class FilterModal(Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         filter_name = self.filter_name.value
-        filter_link = self.filter_link.value
+        filter_link = self.filter_link.value + f"&search_text=" +f"{filter_name}".replace(" " , "%20")
         
         db = Database('database/vinted_db.db')
         user = User(id=interaction.user.id , name=interaction.user.name , filter_link=filter_link , filter_name=filter_name)
@@ -48,11 +48,31 @@ class Tracker(commands.Cog):
     @tasks.loop(seconds=30)
     async def listing_sender(self):
         
-        for each_file in self.get_all_file_names():
+        for each_file in self.get_all_file_names(folder_path="./database/items_list"):
             try:
-                ...
+                with open(f"database/items_list/{each_file}" , "r") as file:
+                    data: list = json.load(file)
+
+                one_item = data.pop(0)
+                user_id = eval(each_file.replace(".json" , ""))
+
+                user: discord.User = await self.bot.fetch_user(user_id)
+
+                embed = discord.Embed(title=user.name , description="" , color=discord.Color.green())
+                embed.add_field(name="Title" , value=one_item["title"] , inline=False)
+                embed.add_field(name="Price" , value=f"{one_item['total_item_price']['amount']} {one_item['total_item_price']['currency_code']}" , inline=False)
+                embed.add_field(name="Brand" , value=one_item["brand_title"] , inline=False)
+                embed.add_field(name="Size" , value=one_item["size_title"] , inline=False)
+                embed.add_field(name="Status" , value=one_item["status"] , inline=False)
+                embed.add_field(name="Buy" , value=f"[Link]({one_item['url']})" , inline=False)
+                embed.set_image(url=one_item["photo"]["url"])
+
+                await user.send(embed=embed)
+
+                with open(f"database/items_list/{each_file}" , "w") as file:
+                    json.dump(data , file , indent=4)
             except Exception as e:
-                ...
+                print(e)
 
     @app_commands.command(name='start-tracking')
     async def start_tracking(self, interaction: discord.Interaction):

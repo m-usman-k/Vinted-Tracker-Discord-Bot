@@ -9,10 +9,6 @@ load_dotenv()
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 BOT = commands.Bot(command_prefix="!", intents=discord.Intents().all())
 
-# Methods:
-
-# Commands:
-
 @BOT.event
 async def on_ready():
     print(f'Logged in as {BOT.user} (ID: {BOT.user.id})')

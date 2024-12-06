@@ -1,3 +1,7 @@
+# files
 .env
 test.*
+
+# folders
 \__pycache__
+\database
